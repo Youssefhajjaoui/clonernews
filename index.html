@@ -44,7 +44,12 @@
     <div id="container">
     </div>
   </main>
-  <button type="submit" id="More">More</button>
+  <div class="pagination" id="pagination">
+    <button class="pagination-btn" id="first-page">&lt;&lt;</button>
+    <button class="pagination-btn" id="prev-page" name="move" value="-1">&lt;</button>
+    <span id="current-page">1</span>
+    <button class="pagination-btn" id="next-page" name="move" value="1">&gt;</button>
+  </div>
   <footer>
     <div class="footer-wrapper">
       <div class="footer-logo">
@@ -56,6 +61,7 @@
       </div>
   </footer>
   <script src="./script.js"></script>
+  <script src="./FrontendStructure.js"></script>
 </body>
 
 </html>
