@@ -1,37 +1,85 @@
 const maxItemApi = "https://hacker-news.firebaseio.com/v0/maxitem.json?print=pretty"
-const Posts  = []
-const Comments  = []
-let story = []
+const story = []
+const comment = []
+let jobs = []
+let polls = []
 let itemWonted = 30
-const getData = async ( pageItems =  itemWonted ) => {
+
+const getData = async (type, itemWonted) => {
+    const CONCURRENT_LIMIT = 50; // Maximum concurrent requests
+    let target = [];
+
     try {
-        const response = await fetch(maxItemApi);
-        const maxItem = await response.json();
-        for (let i = 0; i < pageItems; i++) {
-            const response = await fetch(`https://hacker-news.firebaseio.com/v0/item/${maxItem - i}.json?print=pretty`);
-            const item = await response.json();
-            if (item){
-                switch  (item.type) {
-                    case  'job' || 'story' || 'poll' :
-                        Posts.push(item);
-                        break;
-                    case 'comment': 
-                    Comments.push(item);
-                    break;
+        const maxItemResponse = await fetch(maxItemApi);
+        let currentId = await maxItemResponse.json();
+
+        // Queue to manage active promises
+        const activePromises = new Set();
+        let foundItems = 0;
+
+        const processSingleItem = async (id) => {
+            try {
+                const response = await fetch(
+                    `https://hacker-news.firebaseio.com/v0/item/${id}.json?print=pretty`
+                );
+                const item = await response.json();
+
+                if (item && item.type === type && foundItems < itemWonted) {
+                    target.push(item);
+                    foundItems++;
+                    return true;
                 }
+            } catch (error) {
+                console.error(`Error fetching item ${id}:`, error);
             }
-            story.push(item);
+            return false;
+        };
+
+        while (foundItems < itemWonted) {
+            // Fill up the concurrent requests pool
+            while (activePromises.size < CONCURRENT_LIMIT && foundItems < itemWonted) {
+                const promise = processSingleItem(currentId).then(result => {
+                    activePromises.delete(promise);
+                    return result;
+                });
+
+                activePromises.add(promise);
+                currentId--;
+            }
+
+            // Wait for any promise to complete
+            if (activePromises.size > 0) {
+                await Promise.race(activePromises);
+            }
         }
 
-        displayData( story)
-    }
-    catch (error) {
-        console.error(error);
-    }
-}
+        // Optional: Wait for any remaining relevant promises
+        const remainingPromises = [...activePromises];
+        if (remainingPromises.length > 0) {
+            await Promise.race(remainingPromises);
+        }
+        displayData(target.slice(0, itemWonted));
 
+    } catch (error) {
+        console.error("Error:", error);
+        return target;
+    }
+};
+
+const fetchWithRetry = async (id) => {
+    try {
+        const response = await fetch(
+            `https://hacker-news.firebaseio.com/v0/item/${id}.json?print=pretty`
+        );
+        return await response.json();
+    } catch (error) {
+        console.error(`Failed to fetch item ${id}`, error);
+        return null;
+    }
+};
 function displayData(data) {
-
+    const main = document.querySelector('.container');
+    main.innerHTML = ""
     data.forEach((item, index) => {
         index++;
         const div = document.createElement('div');
@@ -86,14 +134,15 @@ function displayData(data) {
                 `;
                 break;
         }
-        const main = document.querySelector('.container');
         main.appendChild(div);
     })
 }
 
-function Routing(){
-    // get the name  of the page and pass the  data 
-    // for example if page 'jobs' then display the  jobs data inside it 
-
+function Routing() {
+    let category = document.querySelector("#choice-type");
+    category.addEventListener('change', (event) => {
+        getData(event.target.value, itemWonted);
+    });
 }
-getData()
+Routing()
+//getData()
