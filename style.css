@@ -1,145 +1,210 @@
-@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Hind+Vadodara:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..1000&display=swap');
 *{
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Hind Vadodara", sans-serif;
+    font-family: "Afacad Flux", sans-serif;
+    font-optical-sizing: auto;
     font-weight: 300;
     font-style: normal;
+    font-variation-settings:
+      "slnt" 0
 }
 
 ::selection {
-    background: #ff3e00;
+    background: #25b1bf;
     color: #fff;
 }
 
-:root{/** Dark theme primary colors */
-    --color-primary-a0: #f0610b;
-    --color-primary-a10: #f6742f;
-    --color-primary-a20: #fb8749;
-    --color-primary-a30: #ff9863;
-    --color-primary-a40: #ffaa7c;
-    --color-primary-a50: #ffbb95;
-    
-    /** Dark theme surface colors */
-    --color-surface-a0: #121212;
-    --color-surface-a10: #282828;
-    --color-surface-a20: #3f3f3f;
-    --color-surface-a30: #575757;
-    --color-surface-a40: #717171;
-    --color-surface-a50: #8b8b8b;
-    
-    /** Dark theme mixed surface colors */
-    --color-surface-mixed-a0: #271a14;
-    --color-surface-mixed-a10: #3c2f29;
-    --color-surface-mixed-a20: #524540;
-    --color-surface-mixed-a30: #685d58;
-    --color-surface-mixed-a40: #807672;
-    --color-surface-mixed-a50: #98908c;
-    
-     /** Examples */ 
-    .bg-primary {
-     color: var(--color-primary-a50); 
-     background-color: var(--color-surface-a0); 
-    }
+:root{
+    --primary-100:#de283b;
+    --primary-200:#ff6366;
+    --primary-300:#ffccc4;
+    --accent-100:#25b1bf;
+    --accent-200:#005461;
+    --text-100:#1a1a1a;
+    --text-200:#404040;
+    --bg-100:#ffffff;
+    --bg-200:#f5f5f5;
+    --bg-300:#cccccc;
+    --bg-400:#999999;
+    --bg-500:#0F1C2E;
+    --bg-600:#1f2b3e;
+    --bg-700:#374357;
+}
+
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+    background-color:  var(--bg-300);
+}
+::-webkit-scrollbar-thumb {
+    background-color: var(--primary-100);
+    border-radius: 10px;
 }
 
 body{
-    background-color:  var(--color-surface-a0);
-    color: var(--color-surface-a50);
+    width: 100%;
+    min-height: 100vh;
+    background-color: var(--bg-100);
+    color: var(--text-100);
     font-size: 1rem;
-    line-height: 1.5;
-    font-weight: 400;
-    letter-spacing: 0.01em;
-    transition: background-color 0.3s, color 0.3s;
+    line-height: 1.6;
+    font-weight: 300;
+    font-family: "Hind Vadodara", sans-serif;
+    font-optical-sizing: auto;
 }
-
-h1, h2, h3, h4, h5, h6{
-    font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: 1rem;
-}
-
 nav{
-    width:  100%;
-    height: 60px;
+    height: 70px;
+    position:sticky;
+    top: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color:  var( --color-primary-a0);
+    padding: 0 2rem;
+    background-color:var( --bg-100);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 100;
 }
 
 nav .nav-logo a{
-    text-decoration:  none;
-    color: var(--color-surface-a0);
     font-size: 1.5rem;
     font-weight: 700;
-}
-nav  .nav-logo:hover{
-    color: var(--color-primary-a40);
+    color: var(--text-100);
+    text-decoration: none;
 }
 
-nav ul{
+nav ul {
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-nav ul li{
     list-style: none;
-    margin: 0 10px;
 }
-
-nav ul li a{
-    text-decoration: none;
-    color: var(--color-surface-a0);
+nav ul li a {
     font-size: 1rem;
     font-weight: 400;
+    color: var(--text-100);
+    text-decoration: none;
+    transition: color 0.3s;
+    background-color: var(--bg-200);
+    padding: 8px 15px;
+    border-radius: 5px;
+    margin: 0 5px;
 }
-nav ul li a:hover{
-    color: var(--color-primary-a40);
+nav ul li :hover{
+    color: var(--primary-100);
+    border-bottom: 2px solid var(--primary-100);
+    transition: border-bottom 0.3s;
 }
 nav ul li a.active{
-    color: var(--color-primary-a40);
-}
-nav ul li a.active:hover{
-    color: var(--color-primary-a40);
+    color: var(--primary-100);
+    border-bottom: 2px solid var(--primary-100);
+    transition: border-bottom 0.3s;
 }
 
-main {
-    width: 100%;
+
+main{
+    width:100%;
     min-height: 100vh;
-    padding: 10px;
+    display: flex;
+    padding: 2rem;
 }
+
 main .container {
     width: 100%;
-    height:100%;
-    background-color: var(--color-surface-a20);
-}
-main .container div {
-    width: 100%;
-    padding:5px;
-    color: #fff;
-}
-main .container div ul {
+    height: 100%;
     display: flex;
     align-items: center;
+    flex-direction: column;
+    min-height: 100vh;
+    gap: 15px;
 }
-main .container div ul li {
-    list-style: none;
-    margin: 0 10px;
-}
-footer{
+.job-card, .story-card, .poll-card ,.comment-card{
     width: 100%;
-    height: 90px;
+    min-width:  100% !important;
+    position: relative;
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding:10px;
+    background-color: var(--bg-200);
+    border-radius: 10px;
+    border: 1px solid var(--bg-300);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.card-flag {
+    min-width: 100px;
+    border-radius: 10px;
+    background-color: var(--primary-200);
+    position: absolute;
+    top: 0px;
+    left:  20px;
+    transform: translateY(-50%);
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: var(--color-primary-a0);
-    color: var(--color-surface-a0);
-    font-size: 1rem;
-    font-weight: 400;
-    letter-spacing: 0.01em;
-    transition: background-color 0.3s, color 0.3s;
+    color: var(--bg-100);
+    font-weight: 700;
+}
+.story{
+    background-color:  var(--primary-200);
+}
+.job{
+    background-color:  var(--bg-700);
+}
+.poll{
+    background-color:  var(--accent-100);
+}
+.comment{
+    background-color:  var(--bg-400);
+}
+.info{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size:  16px;
+    border-bottom:  1px solid var(--bg-300);
 }
 
+.card-thead {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+
+}
+.text{
+    min-width: 100%; 
+    height: 80px;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.score {
+    width:  100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--primary-100);
+    color: var(--bg-100);
+    border-radius: 5px;
+    font-weight: 700;
+}
+.link a {
+    color: var(--accent-100);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: color 0.3s;
+    text-decoration:  none;
+}
+
+.link a:hover{
+    color: var(--primary-100);
+}
