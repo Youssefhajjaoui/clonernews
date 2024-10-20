@@ -106,8 +106,14 @@ nav ul li a.active{
 main{
     width:100%;
     min-height: 100vh;
-    display: flex;
     padding: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 15px;
+    background-color: var(--bg-100);
+    color: var(--text-100);
 }
 
 main .container {
@@ -233,4 +239,37 @@ main .container {
     to {
         transform: rotate(360deg);
     }
+}
+
+
+.new-content-alert {
+    position: fixed;
+    top: 90px;
+    right: 20px;
+    width: 150px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    background-color: var(--primary-100);
+    color: var(--bg-100);
+    font-weight: 700;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+.alert-content{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+.loading-more{
+    width: 120px;
+    height:  30px;
+    background-color: var(--accent-100);
+    color: var(--bg-100);
+    font-weight: 500;
+    border-radius: 5px;
+    cursor: pointer;
 }
