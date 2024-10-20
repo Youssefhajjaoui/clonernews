@@ -51,7 +51,7 @@ const getData = async (type, itemWonted) => {
     try {
         const maxItem = await fetch(maxItemApi).then(res => res.json());
         if (Array.isArray(maxItem)) {
-            for (const elem of maxItem) {
+            for (let elem of maxItem) {
                 try {
                     while (target.length < itemWonted) {
                         const item = await fetchItem(elem);
@@ -108,7 +108,7 @@ const getData = async (type, itemWonted) => {
 };
 
 function displayData(data) {
-    const main = document.querySelector('.container');
+    const main = document.querySelector('#container');
     main.innerHTML = ""
     data.forEach((item, index) => {
         index++;
