@@ -1,10 +1,11 @@
-
 const story = []
 const comment = []
 let jobs = []
 let polls = []
-let type = '';
+let type = 'live';
+let lastversion;
 let itemWonted = 30
+let maxItemApi;
 
 function getLink(prelink) {
     return `https://hacker-news.firebaseio.com/v0/${prelink}.json?print=pretty`
@@ -24,11 +25,10 @@ const fetchItem = async (id) => {
 const getData = async (type, itemWonted) => {
     const MAX_CONCURRENT = 50;
     let target = [];
-    let maxItemApi;
 
     switch (type) {
         case 'story':
-            maxItemApi = getLink('topstories');
+            maxItemApi = getLink('maxitem');
             target = story;
             break;
         case 'jobs':
@@ -42,8 +42,8 @@ const getData = async (type, itemWonted) => {
         case 'comment':
             maxItemApi = getLink('maxitem')
             target = comment;
-            break;
-        default:
+            break; lastversion
+        case 'live':
             maxItemApi = getLink('maxitem')
             type = null;
     }
@@ -52,34 +52,28 @@ const getData = async (type, itemWonted) => {
         const maxItem = await fetch(maxItemApi).then(res => res.json());
         if (Array.isArray(maxItem)) {
             for (const elem of maxItem) {
-                try {
-                    while (target.length < itemWonted) {
-                        const item = await fetchItem(elem);
-                        console.log('Fetched item:', item);
-                        target.push(item);
-
-                    }
-                } catch (error) {
-                    console.error('Error processing item:', error);
+                console.log(elem);
+                const item = await fetchItem(elem);
+                target.push(item);
+                displayData(target.slice(0, itemWonted))
+                if (target.length === itemWonted) {
+                    break
                 }
             }
-            displayData(target)
             return
-        } else {
-            console.error('maxItem is not an array:', maxItem);
         }
+        lastversion = maxItem;
         let currentId = maxItem;
         let foundItems = 0;
         const activeRequests = new Set();
 
         const processItem = async (id = currentId) => {
             if (foundItems >= itemWonted) return;
-            // console.log(id);
             const item = await fetchItem(id);
 
-            // Accept item if either type matches or type is null (default case)
             if (item && (type === null || item.type === type)) {
                 target.push(item);
+                displayData(target.slice(0, itemWonted));
                 foundItems++;
             }
         };
@@ -99,9 +93,6 @@ const getData = async (type, itemWonted) => {
                 await Promise.race([...activeRequests]);
             }
         }
-
-        displayData(target.slice(0, itemWonted));
-
     } catch (error) {
         console.error("Error fetching data:", error);
     }
@@ -116,11 +107,10 @@ function displayData(data) {
         switch (item.type) {
             case 'story':
                 div.innerHTML = `
-                <ul>
-                <li>${index}</li>
-                Story
+                 <ul>
+                 <li>${index}</li>
+                 Story
                 <li>${item.by}</li>
-                <li> title : ${item.title} </li>
                 <li> time : ${item.time} </li>
                 <li> score : ${item.score} </li>
                 <li> url : <a href="${item.url}" target="_blank">${item.url}</a> </li>
@@ -129,27 +119,26 @@ function displayData(data) {
                 break;
             case 'comment':
                 div.innerHTML = `
-                    <ul>
                  <li>${index}</li>
                  Comment
-                 <li>${item.by}</li>
-                 <li> title : ${item.title} </li>
-                 <li> time : ${item.time} </li>
-                 <li> score : ${item.score} </li> 
-                 </ul>
-                 `;
+                <li>${item.by}</li>
+                <li> title : ${item.title} </li>
+                <li> time : ${item.time} </li>
+                <li> score : ${item.score} </li> 
+                </ul>
+                `;
                 break;
             case 'job':
                 div.innerHTML = `
-                     <ul>
-                     <li>${index}</li>
-                     Job
-                     <li>${item.by}</li>
-                     <li> title : ${item.title} </li>
-                     <li> time : ${item.time} </li>
-                     <li> score : ${item.score} </li> 
-                     </ul>
-                     `;
+                <ul>
+                <li>${index}</li>
+                Job
+                <li>${item.by}</li>
+                <li> title : ${item.title} </li>
+                <li> time : ${item.time} </li>
+                <li> score : ${item.score} </li> 
+                </ul>
+                `;
                 break;
             case 'poll':
                 div.innerHTML = `
@@ -185,8 +174,35 @@ function reloading() {
     })
 }
 
+async function notify() {
+    let isDisplay = false;
+    setInterval(async () => {
+        try {
+            const max = await fetch(maxItemApi).then(res => res.json());
+            if (max !== lastversion && !isDisplay) {
+                const notification = document.createElement('div');
+                notification.className = 'new-content-alert';
+                notification.innerHTML = `
+                    <div class="alert-content">
+                        New stories available! 
+                        <button onclick="window.location.reload()">Reload</button>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                isDisplay = true;
+                lastversion = max; 
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error);  
+        }
+    }, 5000);
+}
+
+
 function clonernews() {
+    getData("live", 30)
     Routing()
     reloading()
+    notify()
 }
 clonernews()
