@@ -4,7 +4,34 @@ const comment = []
 let jobs = []
 let polls = []
 let type = '';
-let itemWonted = 30
+let DataPerPage = 20
+let currentPage = 0;
+
+const dataPerPage = document.getElementById('data-per-page')
+dataPerPage.addEventListener('change', () => {
+    DataPerPage = parseInt(dataPerPage.value);
+});
+
+const prevPageButton = document.getElementById('prev-page');
+const nextPageButton = document.getElementById('next-page');
+const firstPageButton = document.getElementById('first-page');
+
+firstPageButton.addEventListener('click', () => {
+    currentPage = 0;
+    document.getElementById('current-page').textContent = currentPage+1;
+});
+
+prevPageButton.addEventListener('click', () => {
+    if (currentPage > 0) {
+        currentPage--;
+        document.getElementById('current-page').textContent = currentPage+1;
+    }
+});
+
+nextPageButton.addEventListener('click', () => {
+    currentPage++;
+    document.getElementById('current-page').textContent = currentPage+1;
+});
 
 function getLink(prelink) {
     return `https://hacker-news.firebaseio.com/v0/${prelink}.json?print=pretty`
@@ -21,11 +48,12 @@ const fetchItem = async (id) => {
     }
 };
 
-const getData = async (type, itemWonted) => {
+const getData = async (type) => {
     const MAX_CONCURRENT = 50;
     let target = [];
     let maxItemApi;
 
+    displayData(emptyData(DataPerPage))
     switch (type) {
         case 'story':
             maxItemApi = getLink('topstories');
@@ -53,9 +81,9 @@ const getData = async (type, itemWonted) => {
         if (Array.isArray(maxItem)) {
             for (let elem of maxItem) {
                 try {
-                    while (target.length < itemWonted) {
+                    while (target.length < DataPerPage) {
                         const item = await fetchItem(elem);
-                        console.log('Fetched item:', item);
+                        // console.log('Fetched item:', item);
                         target.push(item);
 
                     }
@@ -73,8 +101,7 @@ const getData = async (type, itemWonted) => {
         const activeRequests = new Set();
 
         const processItem = async (id = currentId) => {
-            if (foundItems >= itemWonted) return;
-            // console.log(id);
+            if (foundItems >= DataPerPage) return;
             const item = await fetchItem(id);
 
             // Accept item if either type matches or type is null (default case)
@@ -84,8 +111,9 @@ const getData = async (type, itemWonted) => {
             }
         };
 
-        while (foundItems < itemWonted) {
-            while (activeRequests.size < MAX_CONCURRENT && foundItems < itemWonted) {
+        let start = currentPage * dataPerPage;
+        while (foundItems < start + DataPerPage) {
+            while (activeRequests.size < MAX_CONCURRENT && foundItems < DataPerPage) {
                 const request = processItem();
                 activeRequests.add(request);
 
@@ -99,8 +127,7 @@ const getData = async (type, itemWonted) => {
                 await Promise.race([...activeRequests]);
             }
         }
-
-        displayData(target.slice(0, itemWonted));
+        displayData(target.slice(start, start + DataPerPage));
 
     } catch (error) {
         console.error("Error fetching data:", error);
@@ -112,57 +139,62 @@ function displayData(data) {
     main.innerHTML = ""
     data.forEach((item, index) => {
         index++;
-        const div = document.createElement('div');
+        const div = document.createElement('tr');
+        div.className = 'data';
         switch (item.type) {
             case 'story':
                 div.innerHTML = `
-                <ul>
-                <li>${index}</li>
-                Story
-                <li>${item.by}</li>
-                <li> title : ${item.title} </li>
-                <li> time : ${item.time} </li>
-                <li> score : ${item.score} </li>
-                <li> url : <a href="${item.url}" target="_blank">${item.url}</a> </li>
-                </ul>
+                <td>${index}</td>
+                <td>Story</td>
+                <td>${item.by}</td>
+                <td> title : ${item.title} </td>
+                <td> time : ${item.time} </td>
+                <td> score : ${item.score} </td>
+                <td> url : <a href="${item.url}" target="_blank">${item.url}</a> </td>
+
                 `;
                 break;
             case 'comment':
                 div.innerHTML = `
-                    <ul>
-                 <li>${index}</li>
-                 Comment
-                 <li>${item.by}</li>
-                 <li> title : ${item.title} </li>
-                 <li> time : ${item.time} </li>
-                 <li> score : ${item.score} </li> 
-                 </ul>
+                 <td>${index}</td>
+                 <td>Comment</td>
+                 <td>${item.by}</td>
+                 <td> title : ${item.title} </td>
+                 <td> time : ${item.time} </td>
+                 <td> score : ${item.score} </td> 
+
                  `;
                 break;
             case 'job':
                 div.innerHTML = `
-                     <ul>
-                     <li>${index}</li>
-                     Job
-                     <li>${item.by}</li>
-                     <li> title : ${item.title} </li>
-                     <li> time : ${item.time} </li>
-                     <li> score : ${item.score} </li> 
+                     <ul class="data">
+                     <td>${index}</td>
+                     <td>Job</td>
+                     <td>${item.by}</td>
+                     <td> title : ${item.title} </td>
+                     <td> time : ${item.time} </td>
+                     <td> score : ${item.score} </td> 
                      </ul>
                      `;
                 break;
             case 'poll':
                 div.innerHTML = `
-                <ul>
-                <li>${index}</li>
-                Poll
-                <li>${item.by}</li>
-                <li> title : ${item.title ? item.title : 'no title'} </li>
-                <li> time : ${item.time} </li>
-                <li> score : ${item.score ? item.score : 0} </li> 
+                <ul class="data">
+                <td>${index}</td>
+                <td>Poll</td>
+                <td>${item.by}</td>
+                <td> title : ${item.title ? item.title : 'no title'} </td>
+                <td> time : ${item.time} </td>
+                <td> score : ${item.score ? item.score : 0} </td> 
                 </ul>
                 `;
                 break;
+            default:
+                div.innerHTML = `
+                <ul class="data">
+                <td>Loading data</td> 
+                </ul>
+                `;
         }
         main.appendChild(div);
     })
@@ -172,16 +204,15 @@ function Routing() {
     let category = document.querySelector("#choice-type");
     category.addEventListener('change', (event) => {
         type = event.target.value
-        itemWonted = 30
-        getData(type, itemWonted);
+        getData(type);
     });
 }
 
 function reloading() {
     let buttom = document.querySelector('#More');
     buttom.addEventListener('click', (elem) => {
-        itemWonted += 30
-        getData(type, itemWonted);
+        // DataPerPage += 30
+        getData(type);
     })
 }
 
@@ -190,3 +221,11 @@ function clonernews() {
     reloading()
 }
 clonernews()
+
+function emptyData(a) {
+    let arr = []
+    for (let i = 0; i < a; i++) {
+        arr.push('')
+    }
+    return arr;
+}
