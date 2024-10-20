@@ -1,123 +1,112 @@
-const maxItemApi = "https://hacker-news.firebaseio.com/v0/maxitem.json?print=pretty"
-const pageSizeSelect = document.getElementsByName('move');
-const currentPagedisplay = document.getElementById('current-page');
+
 const story = []
 const comment = []
 let jobs = []
 let polls = []
-let VisiblePerPage = 20
-let currentPage = 1;
+let type = '';
+let itemWonted = 30
 
-document.querySelector('#data-per-page').addEventListener('change', (val) => {
-    VisiblePerPage = parseInt(val.target.value);
-    console.log(val)
-});
+function getLink(prelink) {
+    return `https://hacker-news.firebaseio.com/v0/${prelink}.json?print=pretty`
+}
 
-const renderPagination = () => {
-    pagination.innerHTML = '';
-    const totalPages = Math.ceil(target.length / currentPage);
-    console.log('totalPages', totalPages);
-    for (let i = 1; i <= totalPages; i++) {
-        const button = document.createElement('button');
-        button.textContent = i;
-        if (i === currentPage) {
-            button.classList.add('active');
-        }
-        button.addEventListener('click', () => {
-            currentPage = i;
-            renderTable();
-        });
-        pagination.appendChild(button);
-    }
-};
-
-pageSizeSelect.forEach(select => {
-    select.addEventListener('click', (e) => {
-        // currentPage = 1;
-        
-        if (e.target.value === '-1' && currentPage!= 1|| e.target.value=== '1') {
-            currentPage = currentPage+ parseInt(e.target.value);
-        }
-        currentPagedisplay.textContent = currentPage
-        console.log('test',e.target.value,currentPage);
-        // loadData(data); // Reload the data with the new page size
-    });
-});
-
-const getData = async (type, VisiblePerPage) => {
-    const CONCURRENT_LIMIT = 50; // Maximum concurrent requests
-    let target = [];
-
-    try {
-        const maxItemResponse = await fetch(maxItemApi);
-        let currentId = await maxItemResponse.json();
-
-        // Queue to manage active promises
-        const activePromises = new Set();
-        let foundItems = 0;
-
-        const processSingleItem = async (id) => {
-            try {
-                const response = await fetch(
-                    `https://hacker-news.firebaseio.com/v0/item/${id}.json?print=pretty`
-                );
-                const item = await response.json();
-
-                if (item && item.type === type && foundItems < VisiblePerPage) {
-                    target.push(item);
-                    foundItems++;
-                    return true;
-                }
-            } catch (error) {
-                console.error(`Error fetching item ${id}:`, error);
-            }
-            return false;
-        };
-
-        while (foundItems < VisiblePerPage) {
-            // Fill up the concurrent requests pool
-            while (activePromises.size < CONCURRENT_LIMIT && foundItems < VisiblePerPage) {
-                const promise = processSingleItem(currentId).then(result => {
-                    activePromises.delete(promise);
-                    return result;
-                });
-
-                activePromises.add(promise);
-                currentId--;
-            }
-
-            // Wait for any promise to complete
-            if (activePromises.size > 0) {
-                await Promise.race(activePromises);
-            }
-        }
-
-        // Optional: Wait for any remaining relevant promises
-        const remainingPromises = [...activePromises];
-        if (remainingPromises.length > 0) {
-            await Promise.race(remainingPromises);
-        }
-        // renderPagination();
-        let start = (currentPage - 1) * VisiblePerPage
-        displayData(target.slice(start, start + VisiblePerPage));
-
-    } catch (error) {
-        console.error("Error:", error);
-        return target;
-    }
-};
-
-const fetchWithRetry = async (id) => {
+const fetchItem = async (id) => {
     try {
         const response = await fetch(
             `https://hacker-news.firebaseio.com/v0/item/${id}.json?print=pretty`
         );
         return await response.json();
-    } catch (error) {
-        console.error(`Failed to fetch item ${id}`, error);
+    } catch {
         return null;
     }
 };
+
+const getData = async (type, itemWonted) => {
+    const MAX_CONCURRENT = 50;
+    let target = [];
+    let maxItemApi;
+
+    switch (type) {
+        case 'story':
+            maxItemApi = getLink('topstories');
+            target = story;
+            break;
+        case 'jobs':
+            maxItemApi = getLink("jobstories");
+            target = jobs;
+            break;
+        case 'polls':
+            maxItemApi = getLink('maxitem')
+            target = polls;
+            break;
+        case 'comment':
+            maxItemApi = getLink('maxitem')
+            target = comment;
+            break;
+        default:
+            maxItemApi = getLink('maxitem')
+            type = null;
+    }
+
+    try {
+        const maxItem = await fetch(maxItemApi).then(res => res.json());
+        if (Array.isArray(maxItem)) {
+            for (const elem of maxItem) {
+                try {
+                    while (target.length < itemWonted) {
+                        const item = await fetchItem(elem);
+                        console.log('Fetched item:', item);
+                        target.push(item);
+
+                    }
+                } catch (error) {
+                    console.error('Error processing item:', error);
+                }
+            }
+            displayData(target)
+            return
+        } else {
+            console.error('maxItem is not an array:', maxItem);
+        }
+        let currentId = maxItem;
+        let foundItems = 0;
+        const activeRequests = new Set();
+
+        const processItem = async (id = currentId) => {
+            if (foundItems >= itemWonted) return;
+            // console.log(id);
+            const item = await fetchItem(id);
+
+            // Accept item if either type matches or type is null (default case)
+            if (item && (type === null || item.type === type)) {
+                target.push(item);
+                foundItems++;
+            }
+        };
+
+        while (foundItems < itemWonted) {
+            while (activeRequests.size < MAX_CONCURRENT && foundItems < itemWonted) {
+                const request = processItem();
+                activeRequests.add(request);
+
+                request.finally(() => {
+                    activeRequests.delete(request);
+                })
+                currentId--
+            }
+
+            if (activeRequests.size > 0) {
+                await Promise.race([...activeRequests]);
+            }
+        }
+
+        displayData(target.slice(0, itemWonted));
+
+    } catch (error) {
+        console.error("Error fetching data:", error);
+    }
+};
+
 function displayData(data) {
     const main = document.querySelector('.container');
     main.innerHTML = ""
@@ -182,11 +171,22 @@ function displayData(data) {
 function Routing() {
     let category = document.querySelector("#choice-type");
     category.addEventListener('change', (event) => {
-        console.log(event.target.value, VisiblePerPage)
-        getData(event.target.value, VisiblePerPage);
+        type = event.target.value
+        itemWonted = 30
+        getData(type, itemWonted);
     });
 }
-document.addEventListener('DOMContentLoaded', () => {
+
+function reloading() {
+    let buttom = document.querySelector('#More');
+    buttom.addEventListener('click', (elem) => {
+        itemWonted += 30
+        getData(type, itemWonted);
+    })
+}
+
+function clonernews() {
     Routing()
-})
-//getData()
+    reloading()
+}
+clonernews()
